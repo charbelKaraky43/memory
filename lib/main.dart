@@ -61,7 +61,7 @@ class LevelSettings {
 
 Future<int> populateSourceWords() async {
   var url =
-      'http://192.168.84.170/get_memory_data/getData.php'; // Update with your server details
+      'http://192.168.16.113/get_memory_data/getData.php'; // Update with your server details
 
   try {
     var response = await http.get(Uri.parse(url));

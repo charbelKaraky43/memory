@@ -1,4 +1,0 @@
-   - error_page.dart: This file contains the implementation of the error page displayed when there's an issue fetching data or loading the game. It provides feedback to the user and offer options for retrying or exiting the application.
-   - loading_page.dart: This file is responsible for displaying a loading indicator while data is being fetched or the game is being initialized. It informs the user that the application is still loading and prevents interaction until the process is complete.
-   - level_selection_page.dart: It presents the user with options to select the difficulty level of the game.
-   - game_page.dart: It represents the main game screen where players interact with the memory game.

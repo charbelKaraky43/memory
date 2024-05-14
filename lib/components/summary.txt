@@ -1,5 +1,0 @@
-- replay_popup.dart: This file is responsible for displaying a popup dialog that prompts the player to replay the game after completing a round. It contain UI elements and logic for handling replay options and dismissing the dialog.
-- word_tile.dart: This file defines the `WordTile` widget used to represent individual
-    tiles in the game grid. It include UI elements for displaying
-    word images or text, as well as interactions such as tapping to
-    flip tiles.

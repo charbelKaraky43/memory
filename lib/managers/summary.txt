@@ -1,5 +1,0 @@
-- audio_manager.dart: This file handles audio playback in the game, such as background music and sound effects.
-It provide methods for loading, playing, and stopping audio files, ensuring a seamless audio experience for players.
-
-- game_manager.dart: It manages the overall state and logic of the game, including tracking tapped words,
-checking for matches, and handling animations.
