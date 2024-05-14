@@ -62,35 +62,40 @@ class WordTile extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (word.imageBytes != null)
-            Image.memory(
-              word.imageBytes!,
-              width: 150, // Set width and height as needed
-              height: 150,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                if (kDebugMode) {
-                  print('Error loading image: $error');
-                }
-                return const Icon(Icons.error);
-              },
+            Flexible(
+              child: Image.memory(
+                word.imageBytes!,
+                width: 100, // Adjust the width and height as needed
+                height: 100,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  if (kDebugMode) {
+                    print('Error loading image: $error');
+                  }
+                  return const Icon(Icons.error);
+                },
+              ),
             )
           else
             FutureBuilder<Uint8List>(
               future: _loadImage(context),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                if (snapshot.connectionState == ConnectionState.done &&
+                    snapshot.hasData) {
                   word.imageBytes = snapshot.data!;
-                  return Image.memory(
-                    snapshot.data!,
-                    width: 150, // Set width and height as needed
-                    height: 150,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      if (kDebugMode) {
-                        print('Error loading image: $error');
-                      }
-                      return const Icon(Icons.error);
-                    },
+                  return Flexible(
+                    child: Image.memory(
+                      snapshot.data!,
+                      width: 100, // Adjust the width and height as needed
+                      height: 100,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        if (kDebugMode) {
+                          print('Error loading image: $error');
+                        }
+                        return const Icon(Icons.error);
+                      },
+                    ),
                   );
                 } else {
                   return const CircularProgressIndicator();
@@ -98,22 +103,30 @@ class WordTile extends StatelessWidget {
               },
             ),
           const SizedBox(height: 8),
-          Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.rotationY(pi), // Always rotate text in level 2
-            child: Text(
-              word.text!,
-              style: const TextStyle(
-                color: Colors.white,
-                decoration: TextDecoration.none,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w500,
+          Flexible(
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.rotationY(pi), // Always rotate text in level 2
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  word.text!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    decoration: TextDecoration.none,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w500,
+                  ),
+                  // Minimum font size
+                  maxLines: 1, // Display text in one line
+                ),
               ),
             ),
           ),
         ],
       );
-    } else {
+    }else {
       // For levels 1 and 3, keep original behavior without transformation
       if (word.displayText) {
         return FittedBox(
