@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:memory_game/pages/sub_level_selection_page.dart';
+import 'package:memory_game/pages/game_page.dart';
 
-class LevelSelectionPage extends StatelessWidget {
-  const LevelSelectionPage({Key? key}) : super(key: key);
+class SubLevelSelectionPage extends StatelessWidget {
+  final int mainLevel;
+
+  const SubLevelSelectionPage({Key? key, required this.mainLevel}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +14,7 @@ class LevelSelectionPage extends StatelessWidget {
         title: const Padding(
           padding: EdgeInsets.only(top: 35, bottom: 20), // Reduce the top padding
           child: Text(
-            'B03 - Memory Game',
+            'Select Difficulty',
             style: TextStyle(
               fontSize: 50, // Reduce the font size
               fontWeight: FontWeight.bold,
@@ -35,10 +37,6 @@ class LevelSelectionPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 20), // Add space between title and select level
-                const Text(
-                  'Select a main level',
-                  style: TextStyle(fontSize: 40, color: Colors.black),
-                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10.0),
                   child: ElevatedButton(
@@ -46,7 +44,7 @@ class LevelSelectionPage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SubLevelSelectionPage(mainLevel: 1),
+                          builder: (context) => GamePage(mainLevel: mainLevel, difficulty: 1),
                         ),
                       );
                     },
@@ -54,7 +52,7 @@ class LevelSelectionPage extends StatelessWidget {
                       minimumSize: const Size(300, 80), // Adjust button size for tablet
                     ),
                     child: const Text(
-                      'Level 1',
+                      'Easy',
                       style: TextStyle(fontSize: 52), // Increase font size
                     ),
                   ),
@@ -66,7 +64,7 @@ class LevelSelectionPage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SubLevelSelectionPage(mainLevel: 2),
+                          builder: (context) => GamePage(mainLevel: mainLevel, difficulty: 2),
                         ),
                       );
                     },
@@ -74,7 +72,7 @@ class LevelSelectionPage extends StatelessWidget {
                       minimumSize: const Size(300, 80), // Adjust button size for tablet
                     ),
                     child: const Text(
-                      'Level 2',
+                      'Medium',
                       style: TextStyle(fontSize: 52), // Increase font size
                     ),
                   ),
@@ -86,7 +84,7 @@ class LevelSelectionPage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SubLevelSelectionPage(mainLevel: 3),
+                          builder: (context) => GamePage(mainLevel: mainLevel, difficulty: 3),
                         ),
                       );
                     },
@@ -94,7 +92,7 @@ class LevelSelectionPage extends StatelessWidget {
                       minimumSize: const Size(300, 80), // Adjust button size for tablet
                     ),
                     child: const Text(
-                      'Level 3',
+                      'Hard',
                       style: TextStyle(fontSize: 52), // Increase font size
                     ),
                   ),

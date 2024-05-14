@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:memory_game/animation/confetti_animation.dart';
 import 'package:memory_game/components/replay_popup.dart';
 import 'package:memory_game/components/word_tile.dart';
@@ -12,32 +14,33 @@ import 'package:memory_game/pages/loading_page.dart';
 import 'package:provider/provider.dart';
 
 class GamePage extends StatefulWidget {
-  final int level;
+  final int mainLevel;
+  final int difficulty;
 
-  const GamePage({super.key, required this.level});
+  const GamePage({Key? key, required this.mainLevel, required this.difficulty})
+      : super(key: key);
 
   @override
   State<GamePage> createState() => _GamePageState();
 }
 
 class _GamePageState extends State<GamePage> {
-  // ignore: prefer_typing_uninitialized_variables
   late final _futureCachedImages;
   final List<Word> _gridWords = [];
-  late int _currentLevel;
-  late int _totalPairs; // Variable to track total number of pairs
+  late int _currentMainLevel = widget.mainLevel;
+  late int _currentDifficulty = widget.difficulty;
+  late int _totalPairs;
 
   @override
   void initState() {
     _futureCachedImages = _cacheImages();
-    _currentLevel = widget.level;
-    _totalPairs = _getLevelSettings().rows *
-        _getLevelSettings().columns; // Calculate total pairs
+    _totalPairs = _getLevelSettings().rows * _getLevelSettings().columns;
     final gameManager = Provider.of<GameManager>(context, listen: false);
     gameManager.totalPairs = _totalPairs;
-    _setUp(_getLevelSettings()); // Set up based on selected level
+    _setUp(_getLevelSettings());
     super.initState();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -52,15 +55,15 @@ class _GamePageState extends State<GamePage> {
         if (snapshot.hasData) {
           return Selector<GameManager, bool>(
             selector: (_, gameManager) =>
-                gameManager.roundCompleted ||
+            gameManager.roundCompleted ||
                 gameManager.answeredWords.length == _totalPairs,
             builder: (_, __, ___) {
               final gameManager = Provider.of<GameManager>(context);
               final roundCompleted = gameManager.roundCompleted ||
                   gameManager.answeredWords.length == _totalPairs;
 
-              WidgetsBinding.instance.addPostFrameCallback(
-                (timeStamp) async {
+              WidgetsBinding.instance!.addPostFrameCallback(
+                    (timeStamp) async {
                   if (roundCompleted ||
                       gameManager.answeredWords.length == _totalPairs) {
                     await showDialog(
@@ -101,6 +104,7 @@ class _GamePageState extends State<GamePage> {
                         itemBuilder: (context, index) => WordTile(
                           index: index,
                           word: _gridWords[index],
+                          currentLevel: _currentMainLevel
                         ),
                       ),
                     ),
@@ -118,47 +122,72 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _setUp(LevelSettings levelSettings) {
-    // Create a set to track unique text and image combinations
     Set<String> uniqueTextImageCombos = {};
-
-    // Create a list to store unique words
     List<Word> uniqueWords = [];
 
-    // Iterate through each word in sourceWords
     for (var word in sourceWords) {
-      // Create a string representing the combination of text and image properties
       String textImageCombo = '${word.text}_${word.url}';
 
-      // Check if the combination is unique
       if (!uniqueTextImageCombos.contains(textImageCombo)) {
-        // Add the combination to the set to mark it as seen
         uniqueTextImageCombos.add(textImageCombo);
-
-        // Add the word to the uniqueWords list
         uniqueWords.add(word);
       }
     }
     uniqueWords.shuffle();
-    _gridWords.clear(); // Clear existing grid words
+    _gridWords.clear();
 
     int totalWords = levelSettings.rows * levelSettings.columns;
+    switch(_currentMainLevel){
+      case 1:
+        for (int i = 0; i < totalWords ~/ 2; i++) {
+          _gridWords.add(Word(
+            text: uniqueWords[i].text,
+            url: uniqueWords[i].url,
+            displayText: false,
+          ));
 
-    for (int i = 0; i < totalWords ~/ 2; i++) {
-      // Add word with text only
-      _gridWords.add(Word(
-        text: uniqueWords[i].text,
-        displayText: true,
-      ));
+          _gridWords.add(Word(
+            text: uniqueWords[i].text,
+            url: uniqueWords[i].url,
+            displayText: false,
+          ));
+        }
 
-      // Add word with encoded image
-      _gridWords.add(Word(
-        text: uniqueWords[i].text,
-        url: uniqueWords[i].url, // Store the encoded image data
-        displayText: false,
-      ));
+        _gridWords.shuffle();
+        break;
+
+      case 2:
+        for (int i = 0; i < totalWords ~/ 2; i++) {
+          _gridWords.add(Word(
+            text: uniqueWords[i].text,
+            url: uniqueWords[i].url,
+            displayText: true,
+          ));
+
+          _gridWords.add(Word(
+            text: uniqueWords[i].text,
+            url: uniqueWords[i].url,
+            displayText: true,
+          ));
+        }
+        _gridWords.shuffle();
+        break;
+      case 3:
+        for (int i = 0; i < totalWords ~/ 2; i++) {
+          _gridWords.add(Word(
+            text: uniqueWords[i].text,
+            displayText: true,
+          ));
+
+          _gridWords.add(Word(
+            text: uniqueWords[i].text,
+            url: uniqueWords[i].url,
+            displayText: false,
+          ));
+        }
+        _gridWords.shuffle();
+        break;
     }
-
-    _gridWords.shuffle();
   }
 
   Future<int> _cacheImages() async {
@@ -167,8 +196,6 @@ class _GamePageState extends State<GamePage> {
         try {
           String base64Image = w.url!;
           Uint8List bytes = base64Decode(base64Image);
-
-          // Update the Word object with the decoded image bytes
           w.imageBytes = bytes;
         } catch (e) {
           if (kDebugMode) {
@@ -178,23 +205,21 @@ class _GamePageState extends State<GamePage> {
       }
     }
 
-    // After decoding all images, return a completed future
     return Future.value(1);
   }
+
   double _getMainAxisExtent() {
     final screenHeight = MediaQuery.of(context).size.height;
-    if (_currentLevel == 3 || _currentLevel == 2) {
-      // Calculate mainAxisExtent to fit 3 rows on the screen
-      return screenHeight * 0.3; // Adjust this value as needed
+    if (_currentDifficulty == 3 || _currentDifficulty == 2) {
+      return screenHeight * 0.3;
     } else {
-      // Default mainAxisExtent
       final size = MediaQuery.of(context).size;
       return size.height * 0.38;
     }
   }
 
   LevelSettings _getLevelSettings() {
-    switch (_currentLevel) {
+    switch (_currentDifficulty) {
       case 1:
         return LevelSettings(rows: 2, columns: 3);
       case 2:
@@ -202,7 +227,7 @@ class _GamePageState extends State<GamePage> {
       case 3:
         return LevelSettings(rows: 3, columns: 6);
       default:
-        return LevelSettings(rows: 2, columns: 3); // Default to level 1
+        return LevelSettings(rows: 2, columns: 3);
     }
   }
 }

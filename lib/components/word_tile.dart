@@ -12,11 +12,13 @@ class WordTile extends StatelessWidget {
   const WordTile({
     required this.index,
     required this.word,
+    required this.currentLevel, // Add currentLevel parameter
     super.key,
   });
 
   final int index;
   final Word word;
+  final int currentLevel; // Add currentLevel field
 
   @override
   Widget build(BuildContext context) {
@@ -44,9 +46,8 @@ class WordTile extends StatelessWidget {
               animate: notifier.answeredWords.contains(index),
               child: Container(
                 padding: const EdgeInsets.all(16),
-                child: _buildContent(context),
+                child: _buildContent(context, animate),
               ),
-
             ),
           ),
         );
@@ -54,68 +55,122 @@ class WordTile extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context) {
-    if (word.displayText) {
-      return FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.rotationY(pi),
-          child: Text(
-          word.text,
-          style: const TextStyle(
-            color: Colors.white,
-            decoration: TextDecoration.none, // Remove underline
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w500, // Set font weight to lighter
-          ))
-          ,
-        ),
+  Widget _buildContent(BuildContext context, bool isFlipped) {
+    if (currentLevel == 2) {
+      // For level 2, display both text and image with rotation
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (word.imageBytes != null)
+            Image.memory(
+              word.imageBytes!,
+              width: 150, // Set width and height as needed
+              height: 150,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                if (kDebugMode) {
+                  print('Error loading image: $error');
+                }
+                return const Icon(Icons.error);
+              },
+            )
+          else
+            FutureBuilder<Uint8List>(
+              future: _loadImage(context),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                  word.imageBytes = snapshot.data!;
+                  return Image.memory(
+                    snapshot.data!,
+                    width: 150, // Set width and height as needed
+                    height: 150,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      if (kDebugMode) {
+                        print('Error loading image: $error');
+                      }
+                      return const Icon(Icons.error);
+                    },
+                  );
+                } else {
+                  return const CircularProgressIndicator();
+                }
+              },
+            ),
+          const SizedBox(height: 8),
+          Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.rotationY(pi), // Always rotate text in level 2
+            child: Text(
+              word.text!,
+              style: const TextStyle(
+                color: Colors.white,
+                decoration: TextDecoration.none,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       );
     } else {
-      // Check if imageBytes is already decoded and available
-      if (word.imageBytes != null) {
-        // Display the cached image
-        return Image.memory(
-          word.imageBytes!,
-          width: 100, // Set width and height as needed
-          height: 100,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            if (kDebugMode) {
-              print('Error loading image: $error');
-            }
-            return const Icon(Icons.error);
-          },
-        );
+      // For levels 1 and 3, keep original behavior without transformation
+      if (word.displayText) {
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          child:  Center(
+            child: Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.rotationY(pi),
+            child: Text(
+              word.text!,
+              style: const TextStyle(
+              color: Colors.white,
+              decoration: TextDecoration.none,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w500,
+            ),
+            ),
+            ),
+            ));
       } else {
-        // Load and decode the image asynchronously
-        return FutureBuilder<Uint8List>(
-          future: _loadImage(context),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done &&
-                snapshot.hasData) {
-              // Cache the decoded image bytes
-              word.imageBytes = snapshot.data!;
-              // Display the image
-              return Image.memory(
-                snapshot.data!,
-                width: 100, // Set width and height as needed
-                height: 100,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  if (kDebugMode) {
-                    print('Error loading image: $error');
-                  }
-                  return const Icon(Icons.error);
-                },
-              );
-            } else {
-              // Display a loading indicator while loading the image
-              return const CircularProgressIndicator();
-            }
-          },
-        );
+        if (word.imageBytes != null) {
+          return Image.memory(
+            word.imageBytes!,
+            width: 100,
+            height: 100,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              if (kDebugMode) {
+                print('Error loading image: $error');
+              }
+              return const Icon(Icons.error);
+            },
+          );
+        } else {
+          return FutureBuilder<Uint8List>(
+            future: _loadImage(context),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                word.imageBytes = snapshot.data!;
+                return Image.memory(
+                  snapshot.data!,
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    if (kDebugMode) {
+                      print('Error loading image: $error');
+                    }
+                    return const Icon(Icons.error);
+                  },
+                );
+              } else {
+                return const CircularProgressIndicator();
+              }
+            },
+          );
+        }
       }
     }
   }
@@ -128,7 +183,7 @@ class WordTile extends StatelessWidget {
       if (kDebugMode) {
         print('Error decoding image: $e');
       }
-      rethrow; // Rethrow the error for proper error handling
+      rethrow;
     }
   }
 
@@ -136,8 +191,7 @@ class WordTile extends StatelessWidget {
     bool animate = false;
 
     if (notifier.canFlip) {
-      if (notifier.tappedWords.isNotEmpty &&
-          notifier.tappedWords.keys.last == index) {
+      if (notifier.tappedWords.isNotEmpty && notifier.tappedWords.keys.last == index) {
         animate = true;
       }
       if (notifier.reverseFlip && !notifier.answeredWords.contains(index)) {
