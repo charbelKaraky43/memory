@@ -1,0 +1,1 @@
+   - app_theme.dart: It defines the overall visual theme of the application, including text styles, button styles, and dialog themes.

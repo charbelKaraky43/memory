@@ -1,0 +1,4 @@
+- confetti_animation.dart: This file contains the implementation of the confetti animation that plays when a round is completed in the game.
+- flip_animation.dart: This file handles the animation of flipping tiles in the game. When a player taps on a tile to reveal its content, a flip animation is applied to provide a smooth transition effect.
+- matched_animation.dart: This file manages the animation effect when two matching tiles are found in the game. A matched animation involve highlighting or scaling the matched tiles to indicate a successful match.
+- spin_animation.dart: This file contains the implementation of a spin animation used in various parts of the game UI. The Spin animations add dynamic visual elements to user interactions and enhance the overall user
